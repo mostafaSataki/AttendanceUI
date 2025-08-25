@@ -54,6 +54,9 @@ export async function POST(request: NextRequest) {
           id: user.id,
           username: user.username,
           email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          isActive: user.isActive,
         },
         token
       },
@@ -61,7 +64,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Set HTTP-only cookie with token
-    response.cookies.set('token', token, {
+    response.cookies.set('access_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
