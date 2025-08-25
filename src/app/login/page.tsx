@@ -10,10 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { authAPI } from '@/lib/api';
-import { authHelpers } from '@/lib/auth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useAuthStore } from '@/store/auth';
 
 const loginSchema = z.object({
   email: z.string().email('لطفاً یک آدرس ایمیل معتبر وارد کنید'),
@@ -24,8 +23,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { login, isLoading, error } = useAuthStore();
   
   const {
     register,
@@ -36,33 +34,12 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
-    setError(null);
-    
     try {
-      const response = await authAPI.login(data.email, data.password);
-      
-      // Save auth data
-      authHelpers.login(response.access_token, {
-        id: response.user_id,
-        email: data.email,
-        username: response.username || data.email,
-        full_name: response.full_name || '',
-        role: response.role || 'user',
-        is_active: true,
-      });
-      
-      // Set token in cookie for middleware
-      document.cookie = `access_token=${response.access_token}; path=/; max-age=86400; secure; samesite=strict`;
-      
+      await login(data.email, data.password);
       toast.success('ورود با موفقیت انجام شد');
       router.push('/dashboard');
     } catch (error: any) {
-      const errorMessage = error.message || 'ورود به سیستم ناموفق بود';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
+      toast.error(error.message || 'ورود به سیستم ناموفق بود');
     }
   };
 

@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { authHelpers } from '@/lib/auth';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuthStore } from '@/store/auth';
 import { 
   Users, 
   Building2, 
@@ -27,7 +29,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const user = authHelpers.getCurrentUser();
+  const { user } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats>({
     totalPersonnel: 0,
     activePersonnel: 0,
@@ -91,17 +93,22 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">در حال بارگذاری داشبورد...</p>
-        </div>
-      </div>
+      <ProtectedRoute>
+        <MainLayout>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-gray-600">در حال بارگذاری داشبورد...</p>
+            </div>
+          </div>
+        </MainLayout>
+      </ProtectedRoute>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <ProtectedRoute>
+      <MainLayout>
       {/* Welcome Section */}
       <div className="flex items-center justify-between">
         <div>
@@ -243,5 +250,7 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
     </div>
+      </MainLayout>
+    </ProtectedRoute>
   );
 }

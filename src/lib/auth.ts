@@ -1,7 +1,7 @@
 // JWT Token Management Utilities
 
 interface User {
-  id: number;
+  id: string;
   email: string;
   username: string;
   full_name: string;

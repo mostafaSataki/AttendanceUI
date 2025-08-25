@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { authAPI } from '@/lib/api';
 
 interface User {
-  id: number;
+  id: string;
   email: string;
   username: string;
   full_name: string;
@@ -45,26 +45,46 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         
         try {
-          const response = await authAPI.login(email, password);
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Login failed');
+          }
+          
+          const result = await response.json();
           
           // Store token in localStorage
-          localStorage.setItem('access_token', response.access_token);
+          localStorage.setItem('access_token', result.token);
           
-          // Get user info
-          const userResponse = await authAPI.getCurrentUser();
+          // Create user object from response
+          const user = {
+            id: result.user.id,
+            email: result.user.email,
+            username: result.user.username,
+            full_name: result.user.fullName,
+            role: result.user.role,
+            is_active: result.user.isActive,
+          };
+          
+          // Store user info in localStorage
+          localStorage.setItem('user_info', JSON.stringify(user));
           
           set({
-            user: userResponse,
-            token: response.access_token,
+            user,
+            token: result.token,
             isAuthenticated: true,
             isLoading: false,
             error: null,
           });
-          
-          // Store user info in localStorage
-          localStorage.setItem('user_info', JSON.stringify(userResponse));
         } catch (error: any) {
-          const errorMessage = error.response?.data?.detail || 'Login failed';
+          const errorMessage = error.message || 'Login failed';
           set({
             user: null,
             token: null,
@@ -133,11 +153,25 @@ export const useAuthStore = create<AuthState>()(
             return;
           }
           
-          // Verify token is still valid by getting current user
-          const userResponse = await authAPI.getCurrentUser();
+          // Parse user info from localStorage with error handling
+          let user;
+          try {
+            user = JSON.parse(userInfo);
+          } catch (parseError) {
+            // If parsing fails, clear localStorage and treat as unauthenticated
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_info');
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false,
+            });
+            return;
+          }
           
           set({
-            user: userResponse,
+            user,
             token,
             isAuthenticated: true,
             isLoading: false,
