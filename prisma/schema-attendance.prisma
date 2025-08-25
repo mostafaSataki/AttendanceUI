@@ -45,7 +45,7 @@ model Personnel {
   updatedAt       DateTime @updatedAt
 
   // Relations
-  userId          String?   @unique
+  userId          String?
   user            User?     @relation(fields: [userId], references: [id])
   orgUnit         OrgUnit?  @relation(fields: [orgUnitId], references: [id])
   shift           Shift?    @relation(fields: [shiftId], references: [id])
@@ -92,7 +92,6 @@ model Shift {
   // Relations
   personnel   Personnel[]
   workGroupShifts WorkGroupShiftAssignment[]
-  dailySummaries DailySummary[]
 
   @@map("shifts")
 }
